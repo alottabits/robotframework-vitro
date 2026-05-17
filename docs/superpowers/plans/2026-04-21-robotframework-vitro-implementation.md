@@ -1288,15 +1288,15 @@ Add a static type map and the resolver + two keywords to `VitroLibrary`:
 
 ```python
     _TYPE_MAP = {
-        "CPE": "palco_templates.cpe:Cpe",
-        "ACS": "palco_templates.acs:Acs",
-        "LAN": "palco_templates.lan:Lan",
-        "WAN": "palco_templates.wan:Wan",
-        "SIPPHONE": "palco_templates.sip_phone:SipPhone",
-        "SIPSERVER": "palco_templates.sip_server:SipServer",
-        "TRAFFIC_CONTROLLER": "palco_templates.traffic_controller:TrafficController",
-        "QOE_CLIENT": "palco_templates.qoe_client:QoeClient",
-        "SDWAN_ROUTER": "palco_templates.sdwan_router:SdwanRouter",
+        "CPE": "testprotocols.devices.cpe:CpeDevice",
+        "ACS": "testprotocols.devices.infra:AcsDevice",
+        "LAN": "testprotocols.devices.client:LanClientDevice",
+        "WAN": "testprotocols.devices.wan:WanServerDevice",
+        "SIPPHONE": "testprotocols.devices.voice:SipPhoneDevice",
+        "SIPSERVER": "testprotocols.devices.voice:SipServerDevice",
+        "TRAFFIC_CONTROLLER": "testprotocols.devices.traffic:TrafficControllerDevice",
+        "QOE_CLIENT": "testprotocols.devices.client:QoeClientDevice",
+        "SDWAN_ROUTER": "testprotocols.devices.sdwan:SdwanRouterDevice",
     }
 
     def __init__(self) -> None:
@@ -1879,7 +1879,7 @@ robot \
 
 ```python
 from robot.api.deco import keyword
-from palco_templates.models.impairment import ImpairmentProfile
+from testprotocols.models.impairment import ImpairmentProfile
 
 
 def _get_listener():

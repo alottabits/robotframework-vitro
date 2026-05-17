@@ -204,7 +204,7 @@ Values feed the listener constructor when the user supplies `-V robotframework_v
 
 ### Device type resolution
 
-`_resolve_device_type()` maintains a static map from upper-case type names to vitro / vitro-commons classes (entries for `CPE`, `ACS`, `LAN`, `WAN`, `SIPPHONE`, `SIPSERVER`, `TRAFFIC_CONTROLLER`, `QOE_CLIENT`, `SDWAN_ROUTER`). Map misses fall through to a dynamic import from `palco_templates.*` / plugin-provided device classes. Resolved classes are cached per listener lifetime.
+`_resolve_device_type()` maintains a static map from upper-case type names to vitro device protocols from `testprotocols` (entries for `CPE`, `ACS`, `LAN`, `WAN`, `SIPPHONE`, `SIPSERVER`, `TRAFFIC_CONTROLLER`, `QOE_CLIENT`, `SDWAN_ROUTER`). Map misses fall through to a dynamic import from `testprotocols.devices.*` / plugin-provided device classes. Resolved classes are cached per listener lifetime.
 
 The static map stays minimal on purpose: it covers the types consumers commonly need, and the dynamic fallback keeps the door open for test-project-specific device classes without forcing a release of the bridge.
 
@@ -258,7 +258,7 @@ SD-WAN failover maintains application continuity
 
 ```python
 from robot.api.deco import keyword
-from palco_templates.models.impairment import ImpairmentProfile
+from testprotocols.models.impairment import ImpairmentProfile
 
 def _get_listener():
     from robotframework_vitro.listener import get_listener

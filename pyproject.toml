@@ -25,6 +25,7 @@ classifiers = [
 dependencies = [
     "robotframework>=6.0",
     "vitro>=0.1.0",
+    "testprotocols",
 ]
 
 [project.optional-dependencies]

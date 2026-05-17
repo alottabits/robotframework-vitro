@@ -64,7 +64,7 @@ Or invoke `robot` directly:
 
 ~~~python
 from robot.api.deco import keyword
-from palco_templates.models.impairment import ImpairmentProfile
+from testprotocols.models.impairment import ImpairmentProfile
 
 
 def _get_listener():
