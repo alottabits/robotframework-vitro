@@ -27,11 +27,25 @@ Or invoke `robot` directly:
 | Keyword | Purpose |
 | --- | --- |
 | `Get Device Manager` | Returns the vitro `DeviceManager` |
-| `Get Device By Type` | Resolve type name → class → instance (optional `index`) |
-| `Get Devices By Type` | Return `dict[name, instance]` |
 | `Get Vitro Config` | Returns the merged `VitroConfig` |
+| `Get Device <name>` | Returns the device registered under `<name>` in the inventory |
+| `Get All Devices` | Returns `dict[name, device]` for every registered device |
 | `Log Step` | Emits `[STEP] <message>` at INFO level |
 | `Set Test Context` / `Get Test Context` / `Clear Test Context` | Per-test dict; cleared automatically in `end_test` |
+
+### Resolving devices
+
+Devices are looked up by their inventory name — the same key vitro plugins
+register them under via `vitro_add_devices`. There is no string-to-class type
+resolver: vitro's plugin manager and `DeviceManager` are the single source of
+truth. If the name isn't in the inventory, `Get Device` raises
+`VitroLibraryError` and lists the names that are available.
+
+For type-filtered lookups (e.g. "all SIP phones") a testbed-specific Robot
+resource file can import its own device class and reach the DeviceManager via
+`Get Device Manager`, then invoke `get_devices_by_type` on it through Robot's
+`Call Method`. That stays a testbed concern; robotframework-vitro itself only
+offers name-based access.
 
 ## Key design principles
 
@@ -64,7 +78,6 @@ Or invoke `robot` directly:
 
 ~~~python
 from robot.api.deco import keyword
-from testprotocols.models.impairment import ImpairmentProfile
 
 
 def _get_listener():
@@ -75,17 +88,20 @@ def _get_listener():
 class RouterKeywords:
     ROBOT_LIBRARY_SCOPE = "SUITE"
 
-    @keyword("Apply Impairment Profile")
-    def apply_impairment_profile(self, router, profile_name):
-        original = router.netem.get_impairment_profile()
-        profile = ImpairmentProfile.from_preset(profile_name)
-        router.netem.set_impairment_profile(profile)
+    @keyword("Set Router Hostname")
+    def set_router_hostname(self, router, hostname):
+        original = router.hostname
+        router.set_hostname(hostname)
         _get_listener().register_teardown(
-            f"Restore impairment profile on {router.device_name}",
-            router.netem.set_impairment_profile,
+            f"Restore hostname on {router.device_name}",
+            router.set_hostname,
             original,
         )
 ~~~
+
+Robot tests obtain `${router}` via `${router}=    Get Device    edge_router`
+and pass it into the keyword. The teardown registered here runs automatically
+when the test ends; the test itself does not need a `[Teardown]` block.
 
 ## License
 
