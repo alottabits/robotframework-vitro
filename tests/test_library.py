@@ -6,6 +6,7 @@ import pytest
 
 from robotframework_vitro.exceptions import VitroLibraryError
 from robotframework_vitro.library import VitroLibrary
+from vitro.devices.base_devices.vitro_device import VitroDevice
 
 
 @pytest.fixture
@@ -14,6 +15,7 @@ def listener(mocker):
     fake = MagicMock(name="listener")
     fake.test_context = {}
     fake.device_manager = MagicMock(name="device_manager")
+    fake.device_manager.get_devices_by_type.return_value = {}
     fake.vitro_config = MagicMock(name="vitro_config")
     mocker.patch("robotframework_vitro.library.get_listener", return_value=fake)
     return fake
@@ -85,108 +87,69 @@ def test_get_vitro_config_raises_before_deploy(mocker):
         lib.get_vitro_config()
 
 
-class FakeDevice:
+class FakeDevice(VitroDevice):
     """Stand-in for a vitro device class used in library tests."""
 
     def __init__(self, name: str):
         self.device_name = name
 
 
-def test_resolve_device_type_hits_static_map(listener):
-    lib = VitroLibrary()
-    mapping = lib._static_type_map()
-    assert "CPE" in mapping
-    assert "SDWAN_ROUTER" in mapping
+def test_get_device_returns_named_instance(listener):
+    phone1 = FakeDevice("phone1")
+    listener.device_manager.get_devices_by_type.return_value = {"phone1": phone1}
 
-
-def test_resolve_device_type_caches_resolved_classes(mocker, listener):
     lib = VitroLibrary()
 
-    mocker.patch.object(
-        VitroLibrary,
-        "_static_type_map",
-        return_value={"FAKE": "tests.fixtures.fake_device:FakeDevice"},
-    )
-    import_module = mocker.patch("robotframework_vitro.library.import_module")
-    import_module.return_value = MagicMock(FakeDevice=FakeDevice)
-
-    first = lib._resolve_device_type("FAKE")
-    second = lib._resolve_device_type("fake")  # case-insensitive + cache
-
-    assert first is FakeDevice
-    assert second is FakeDevice
-    import_module.assert_called_once_with("tests.fixtures.fake_device")
+    assert lib.get_device("phone1") is phone1
 
 
-def test_resolve_device_type_unknown_raises(listener):
+def test_get_device_unknown_name_raises(listener):
+    listener.device_manager.get_devices_by_type.return_value = {
+        "phone1": FakeDevice("phone1"),
+    }
+
     lib = VitroLibrary()
-    with pytest.raises(VitroLibraryError, match="unknown device type"):
-        lib._resolve_device_type("NotARealType")
+
+    with pytest.raises(VitroLibraryError, match="phone2") as excinfo:
+        lib.get_device("phone2")
+    assert "phone1" in str(excinfo.value)
 
 
-def test_get_device_by_type_delegates_to_device_manager(mocker, listener):
+def test_get_device_raises_before_deploy(mocker):
+    fake = MagicMock(name="listener")
+    fake.device_manager = None
+    mocker.patch("robotframework_vitro.library.get_listener", return_value=fake)
+
     lib = VitroLibrary()
-    mocker.patch.object(
-        VitroLibrary,
-        "_resolve_device_type",
-        return_value=FakeDevice,
-    )
-    instance = FakeDevice("cpe-0")
-    listener.device_manager.get_device_by_type.return_value = instance
-
-    result = lib.get_device_by_type("CPE")
-
-    listener.device_manager.get_device_by_type.assert_called_once_with(FakeDevice)
-    assert result is instance
+    with pytest.raises(VitroLibraryError, match="not deployed"):
+        lib.get_device("phone1")
 
 
-def test_get_device_by_type_with_index(mocker, listener):
+def test_get_all_devices_returns_full_dict(listener):
+    devices = {
+        "phone1": FakeDevice("phone1"),
+        "phone2": FakeDevice("phone2"),
+    }
+    listener.device_manager.get_devices_by_type.return_value = devices
+
     lib = VitroLibrary()
-    mocker.patch.object(
-        VitroLibrary,
-        "_resolve_device_type",
-        return_value=FakeDevice,
-    )
-    instances = {"phone0": FakeDevice("phone0"), "phone1": FakeDevice("phone1")}
-    listener.device_manager.get_devices_by_type.return_value = instances
 
-    result = lib.get_device_by_type("SIPPHONE", index=1)
-
-    assert result is instances["phone1"]
+    assert lib.get_all_devices() == devices
 
 
-def test_get_devices_by_type_returns_dict(mocker, listener):
+def test_get_all_devices_raises_before_deploy(mocker):
+    fake = MagicMock(name="listener")
+    fake.device_manager = None
+    mocker.patch("robotframework_vitro.library.get_listener", return_value=fake)
+
     lib = VitroLibrary()
-    mocker.patch.object(
-        VitroLibrary,
-        "_resolve_device_type",
-        return_value=FakeDevice,
-    )
-    instances = {"p0": FakeDevice("p0"), "p1": FakeDevice("p1")}
-    listener.device_manager.get_devices_by_type.return_value = instances
-
-    assert lib.get_devices_by_type("SIPPHONE") == instances
+    with pytest.raises(VitroLibraryError, match="not deployed"):
+        lib.get_all_devices()
 
 
-def test_get_device_by_type_out_of_range_raises_library_error(mocker, listener):
+def test_get_all_devices_filters_via_vitro_device_base(listener):
     lib = VitroLibrary()
-    mocker.patch.object(VitroLibrary, "_resolve_device_type", return_value=FakeDevice)
-    listener.device_manager.get_devices_by_type.return_value = {"p0": FakeDevice("p0")}
 
-    with pytest.raises(VitroLibraryError, match="out of range"):
-        lib.get_device_by_type("SIPPHONE", index=5)
+    lib.get_all_devices()
 
-
-def test_resolve_device_type_missing_class_in_static_module_raises(mocker, listener):
-    """If the static map points at a real module that lacks the named class, report VitroLibraryError."""
-    lib = VitroLibrary()
-    mocker.patch.object(
-        VitroLibrary,
-        "_static_type_map",
-        return_value={"FAKE": "tests.fixtures.fake_device:MissingClass"},
-    )
-    fake_module = MagicMock(spec=[])  # no attributes
-    mocker.patch("robotframework_vitro.library.import_module", return_value=fake_module)
-
-    with pytest.raises(VitroLibraryError, match="unknown device type"):
-        lib._resolve_device_type("FAKE")
+    listener.device_manager.get_devices_by_type.assert_called_once_with(VitroDevice)
