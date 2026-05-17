@@ -1178,6 +1178,8 @@ git -C /home/rjvisser/projects/req-tst/robotframework-vitro commit -m "feat: add
 
 ## Task 10: Library — device type resolution + `Get Device By Type` + `Get Devices By Type`
 
+> **Superseded — see CHANGELOG "Unreleased".** The implementation described in this task (static `_TYPE_MAP` + `_resolve_device_type` + `Get Device By Type` / `Get Devices By Type`) has been removed. Device access is now name-based via `Get Device <name>` and `Get All Devices`, both routing through `device_manager.get_devices_by_type(VitroDevice)` (the pytest-palco pattern). The original step-by-step task below is preserved as a historical record.
+
 **Files:**
 - Modify: `robotframework_vitro/library.py`
 - Modify: `tests/test_library.py`

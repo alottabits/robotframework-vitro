@@ -204,6 +204,8 @@ Values feed the listener constructor when the user supplies `-V robotframework_v
 
 ### Device type resolution
 
+> **Superseded — see CHANGELOG "Unreleased".** The static `testprotocols`-backed map described below was removed. Device access is now name-based: `Get Device <inventory_name>` and `Get All Devices` delegate to `device_manager.get_devices_by_type(VitroDevice)` and key by name (the pytest-palco pattern). There is no string-to-class resolver. The paragraphs below are preserved as a historical record of the original design.
+
 `_resolve_device_type()` maintains a static map from upper-case type names to vitro device protocols from `testprotocols` (entries for `CPE`, `ACS`, `LAN`, `WAN`, `SIPPHONE`, `SIPSERVER`, `TRAFFIC_CONTROLLER`, `QOE_CLIENT`, `SDWAN_ROUTER`). Map misses fall through to a dynamic import from `testprotocols.devices.*` / plugin-provided device classes. Resolved classes are cached per listener lifetime.
 
 The static map stays minimal on purpose: it covers the types consumers commonly need, and the dynamic fallback keeps the door open for test-project-specific device classes without forcing a release of the bridge.
