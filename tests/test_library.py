@@ -87,8 +87,12 @@ def test_get_vitro_config_raises_before_deploy(mocker):
         lib.get_vitro_config()
 
 
-class FakeDevice(VitroDevice):
-    """Stand-in for a vitro device class used in library tests."""
+class FakeDevice:
+    """Stand-in for a vitro device used in library tests.
+
+    Not a real VitroDevice subclass — the DeviceManager is mocked, so the
+    isinstance filter against VitroDevice is bypassed and identity is enough.
+    """
 
     def __init__(self, name: str):
         self.device_name = name
