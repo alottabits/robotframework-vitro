@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### Changed (BREAKING)
+- Device lookup is now name-based, mirroring pytest-palco. The previous
+  `Get Device By Type` / `Get Devices By Type` keywords (which used a hardcoded
+  `_TYPE_MAP` of nine testprotocols aliases) are removed. Suites that referenced
+  them must switch to `Get Device <inventory_name>` or call the DeviceManager
+  directly via `Get Device Manager` + `Call Method ... get_devices_by_type`.
+
+### Added
+- `Get Device <name>` keyword — returns the device registered under `<name>`,
+  raising `VitroLibraryError` with the available names on miss.
+- `Get All Devices` keyword — returns `dict[name, device]` for every registered
+  device.
+
+### Removed
+- `Get Device By Type` and `Get Devices By Type` keywords.
+- `VitroLibrary._TYPE_MAP`, `_static_type_map`, `_resolve_device_type`, and
+  `_type_cache`.
+- `testprotocols` runtime dependency.
+
 ## 0.1.0 (unreleased)
 
 ### Added
