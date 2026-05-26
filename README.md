@@ -82,22 +82,35 @@ offers name-based access.
 
 ## Reaching the bridge from Python
 
-The infrastructure keywords in `VitroLibrary` are also exposed as
-module-level functions, so Python-implemented keyword libraries can reach
-the bridge without instantiating the Robot library class:
+Every infrastructure keyword in `VitroLibrary` has a matching module-level
+function on the package, so Python-implemented keyword libraries can reach
+the bridge directly without instantiating the Robot library class:
 
 ~~~python
 from robotframework_vitro import (
+    clear_test_context,
     get_all_devices,
     get_device,
     get_device_manager,
+    get_test_context,
     get_vitro_config,
+    log_step,
+    register_teardown,
+    set_test_context,
 )
 ~~~
 
-Each raises `VitroLibraryError` with the same friendly message as the
-corresponding Robot keyword if it is called before devices are deployed,
-or (for `get_device`) the name isn't in the inventory.
+The Robot keywords are one-line forwarders to these functions; surface
+and error semantics are identical. The device accessors raise
+`VitroLibraryError` (matching the keyword's friendly message) if called
+before devices are deployed or, for `get_device`, the name isn't in the
+inventory. `register_teardown` and the `test_context` functions reach the
+listener's stack/dict directly — both exist from listener construction,
+so they work before `start_suite`.
+
+If you need a listener attribute that doesn't have a module-level
+function (e.g. `cmdline_args`, `options`), import `get_listener` from
+the package root and call it.
 
 ## Writing a test-project keyword library
 
@@ -105,15 +118,7 @@ or (for `get_device`) the name isn't in the inventory.
 # File: RouterKeywords.py  ← filename must match the class name (see note below)
 from robot.api.deco import keyword
 
-from robotframework_vitro import get_device
-
-
-def _get_listener():
-    # Lazy import: Robot's library loader can pull this module before the
-    # listener's own module is fully initialised, so resolve get_listener at
-    # call time instead of import time.
-    from robotframework_vitro.listener import get_listener
-    return get_listener()
+from robotframework_vitro import get_device, register_teardown
 
 
 class RouterKeywords:
@@ -123,7 +128,7 @@ class RouterKeywords:
     def set_router_hostname(self, router, hostname):
         original = router.hostname
         router.set_hostname(hostname)
-        _get_listener().register_teardown(
+        register_teardown(
             f"Restore hostname on {router.device_name}",
             router.set_hostname,
             original,
@@ -140,8 +145,8 @@ class RouterKeywords:
 
 Robot tests obtain `${router}` via `${router}=    Get Device    edge_router`
 and pass it into the keyword. Peer devices the keyword coordinates with
-internally (here the ACS) are best resolved from inside the keyword body via
-`get_device("...")`, so the test stays focused on the actor and is not
+internally (here the ACS) are best resolved from inside the keyword body
+via `get_device("...")`, so the test stays focused on the actor and is not
 forced to plumb collaborators through. The teardown registered above runs
 automatically when the test ends; the test itself does not need a
 `[Teardown]` block.

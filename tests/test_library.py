@@ -7,10 +7,15 @@ import pytest
 from robotframework_vitro.exceptions import VitroLibraryError
 from robotframework_vitro.library import (
     VitroLibrary,
+    clear_test_context,
     get_all_devices,
     get_device,
     get_device_manager,
+    get_test_context,
     get_vitro_config,
+    log_step,
+    register_teardown,
+    set_test_context,
 )
 from vitro.devices.base_devices.vitro_device import VitroDevice
 
@@ -259,3 +264,56 @@ def test_module_accessors_reachable_from_package_namespace():
     assert rfv.get_vitro_config is get_vitro_config
     assert rfv.get_device is get_device
     assert rfv.get_all_devices is get_all_devices
+    assert rfv.register_teardown is register_teardown
+    assert rfv.set_test_context is set_test_context
+    assert rfv.get_test_context is get_test_context
+    assert rfv.clear_test_context is clear_test_context
+    assert rfv.log_step is log_step
+
+
+# ---------------------------------------------------------------------------
+# Module-level functions that forward to the listener-coupled surface
+# (register_teardown, test_context dict ops, log_step). Same forwarder
+# pattern as the device accessors above.
+# ---------------------------------------------------------------------------
+
+
+def test_module_register_teardown_pushes_onto_listener_stack(listener):
+    cleanup = MagicMock(name="cleanup")
+    register_teardown("undo something", cleanup, 1, 2, key="value")
+
+    listener.register_teardown.assert_called_once_with(
+        "undo something", cleanup, 1, 2, key="value"
+    )
+
+
+def test_module_set_test_context_writes_to_listener(listener):
+    set_test_context("answer", 42)
+    assert listener.test_context == {"answer": 42}
+
+
+def test_module_get_test_context_returns_stored_value(listener):
+    set_test_context("answer", 42)
+    assert get_test_context("answer") == 42
+
+
+def test_module_get_test_context_returns_default_when_missing(listener):
+    assert get_test_context("missing", default="fallback") == "fallback"
+
+
+def test_module_get_test_context_raises_without_default(listener):
+    with pytest.raises(KeyError, match="missing"):
+        get_test_context("missing")
+
+
+def test_module_clear_test_context_empties_listener_dict(listener):
+    set_test_context("a", 1)
+    set_test_context("b", 2)
+    clear_test_context()
+    assert listener.test_context == {}
+
+
+def test_module_log_step_emits_prefixed_message(listener, caplog):
+    with caplog.at_level("INFO", logger="robotframework_vitro.library"):
+        log_step("Reset router")
+    assert any("[STEP] Reset router" in rec.message for rec in caplog.records)

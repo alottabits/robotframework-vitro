@@ -11,6 +11,7 @@ to those module-level functions and stay one-liners.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from robot.api.deco import keyword
@@ -86,6 +87,48 @@ def get_all_devices() -> dict[str, Any]:
     return dm.get_devices_by_type(VitroDevice)
 
 
+def register_teardown(
+    description: str,
+    func: Callable[..., Any],
+    *args: Any,
+    **kwargs: Any,
+) -> None:
+    """Push a cleanup callable onto the listener's LIFO teardown stack.
+
+    Drained automatically when the current test ends. ``description`` is
+    used only for logging if the cleanup raises.
+    """
+    get_listener().register_teardown(description, func, *args, **kwargs)
+
+
+def set_test_context(key: str, value: Any) -> None:
+    """Store ``value`` under ``key`` in the per-test context dict."""
+    get_listener().test_context[key] = value
+
+
+def get_test_context(key: str, default: Any = _SENTINEL) -> Any:
+    """Return the value previously stored under ``key``.
+
+    Raises ``KeyError`` if ``key`` is absent and no ``default`` is given.
+    """
+    context = get_listener().test_context
+    if key in context:
+        return context[key]
+    if default is _SENTINEL:
+        raise KeyError(key)
+    return default
+
+
+def clear_test_context() -> None:
+    """Drop every entry from the per-test context dict."""
+    get_listener().test_context.clear()
+
+
+def log_step(message: str) -> None:
+    """Emit ``[STEP] <message>`` at INFO level."""
+    _log.info("[STEP] %s", message)
+
+
 # ---------------------------------------------------------------------------
 # VitroLibrary — Robot Framework library facade
 #
@@ -103,27 +146,22 @@ class VitroLibrary:
     @keyword("Set Test Context")
     def set_test_context(self, key: str, value: Any) -> None:
         """Store ``value`` under ``key`` in the per-test context dict."""
-        get_listener().test_context[key] = value
+        set_test_context(key, value)
 
     @keyword("Get Test Context")
     def get_test_context(self, key: str, default: Any = _SENTINEL) -> Any:
         """Return the value previously stored under ``key``."""
-        context = get_listener().test_context
-        if key in context:
-            return context[key]
-        if default is _SENTINEL:
-            raise KeyError(key)
-        return default
+        return get_test_context(key, default)
 
     @keyword("Clear Test Context")
     def clear_test_context(self) -> None:
         """Drop every entry from the per-test context dict."""
-        get_listener().test_context.clear()
+        clear_test_context()
 
     @keyword("Log Step")
     def log_step(self, message: str) -> None:
         """Emit ``[STEP] <message>`` at INFO level."""
-        _log.info("[STEP] %s", message)
+        log_step(message)
 
     @keyword("Get Device Manager")
     def get_device_manager(self) -> Any:

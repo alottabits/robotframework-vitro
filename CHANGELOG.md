@@ -14,23 +14,26 @@
   raising `VitroLibraryError` with the available names on miss.
 - `Get All Devices` keyword — returns `dict[name, device]` for every registered
   device.
-- Module-level accessor functions `get_device_manager`, `get_vitro_config`,
-  `get_device`, and `get_all_devices`. Each raises `VitroLibraryError` with
-  the same friendly messages as the matching Robot keyword. Re-exported from
-  the package root so Python-implemented keyword libraries can reach the
-  bridge without instantiating `VitroLibrary`. The Robot keywords are now
-  one-line forwarders to these functions; surface and error semantics are
-  unchanged.
+- Module-level functions covering every `VitroLibrary` infrastructure
+  keyword: `get_device_manager`, `get_vitro_config`, `get_device`,
+  `get_all_devices`, `register_teardown`, `set_test_context`,
+  `get_test_context`, `clear_test_context`, and `log_step`. Each
+  matches the surface and error semantics of the corresponding
+  keyword. Re-exported from the package root so Python-implemented
+  keyword libraries can reach the bridge without instantiating
+  `VitroLibrary` and without the `_get_listener` lazy-import helper.
+  The Robot keywords are one-line forwarders to these functions.
 - `py.typed` marker (PEP 561). Downstream type-checkers now honour the
   package's annotations instead of falling back to "missing stubs".
 
 ### Docs
 - README: new "Reaching the bridge from Python" section covering the
-  module-level accessors, a "Caveat on `skip_boot`" callout, a Robot
+  full module-level surface, an updated keyword-library snippet that
+  uses `register_teardown` and `get_device` directly (no
+  `_get_listener` helper), a "Caveat on `skip_boot`" callout, a Robot
   library-name convention warning (filename must match the class name
-  case-insensitively), a Python typing note for Robot's auto-conversion
-  of annotated keyword arguments, and an explanation of the
-  `_get_listener` lazy-import pattern.
+  case-insensitively), and a Python typing note for Robot's
+  auto-conversion of annotated keyword arguments.
 - `vitrorobot --help`: argparse description + epilog now document that
   arguments not consumed by the wrapper are forwarded to `robot` unchanged
   (e.g. `--outputdir`, `--include`, test paths), with a worked example.
