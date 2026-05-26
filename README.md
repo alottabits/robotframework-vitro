@@ -105,6 +105,8 @@ or (for `get_device`) the name isn't in the inventory.
 # File: RouterKeywords.py  ← filename must match the class name (see note below)
 from robot.api.deco import keyword
 
+from robotframework_vitro import get_device
+
 
 def _get_listener():
     # Lazy import: Robot's library loader can pull this module before the
@@ -126,11 +128,23 @@ class RouterKeywords:
             router.set_hostname,
             original,
         )
+
+    @keyword("Confirm Router Is Provisioned By ACS")
+    def confirm_router_is_provisioned_by_acs(self, router):
+        # Resolve a peer device by inventory name from inside the keyword
+        # body — no need to pass it in from the .robot file or instantiate
+        # VitroLibrary just to reach the DeviceManager.
+        acs = get_device("acs_server")
+        assert acs.has_provisioned(router.serial_number)
 ~~~
 
 Robot tests obtain `${router}` via `${router}=    Get Device    edge_router`
-and pass it into the keyword. The teardown registered here runs automatically
-when the test ends; the test itself does not need a `[Teardown]` block.
+and pass it into the keyword. Peer devices the keyword coordinates with
+internally (here the ACS) are best resolved from inside the keyword body via
+`get_device("...")`, so the test stays focused on the actor and is not
+forced to plumb collaborators through. The teardown registered above runs
+automatically when the test ends; the test itself does not need a
+`[Teardown]` block.
 
 > **Robot library-name convention.** When a Python library file contains a
 > single class, Robot Framework expects the filename to match the class name
