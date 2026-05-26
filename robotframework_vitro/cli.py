@@ -24,7 +24,20 @@ _VITRO_ARGS = [
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="vitrorobot",
-        description="Run Robot Framework tests with the vitro bridge listener",
+        description=(
+            "Run Robot Framework tests with the vitro bridge listener. "
+            "The listed options below configure the VitroListener; "
+            "every other argument is forwarded to robot unchanged "
+            "(e.g. --outputdir, --include, --exclude, --variable, "
+            "test-suite paths)."
+        ),
+        epilog=(
+            "Example:\n"
+            "  vitrorobot --env-config env.json --inventory-config inv.json \\\n"
+            "    --board-name my-bench --outputdir results/ -i smoke tests/\n\n"
+            "The --outputdir, -i, and tests/ arguments are forwarded to robot."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     for flag, dest, opts in _VITRO_ARGS:
         parser.add_argument(flag, dest=dest, **opts)
