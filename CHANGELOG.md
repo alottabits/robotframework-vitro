@@ -20,6 +20,11 @@
 - `VitroLibrary._TYPE_MAP`, `_static_type_map`, `_resolve_device_type`, and
   `_type_cache`.
 - `testprotocols` runtime dependency.
+- `robotframework_vitro.variables` module. The Robot variable-file pattern
+  it implemented (surfacing `VITRO_*` env vars as `${VITRO_*}` variables)
+  predated the listener's own env-var ingestion and `Get Vitro Config`;
+  it had no internal consumers and was not re-exported from the package
+  root.
 
 ## 0.1.0 (unreleased)
 
@@ -31,7 +36,5 @@
   `Get Device By Type`, `Get Devices By Type`, `Get Vitro Config`, `Log Step`,
   and context-dict keywords.
 - `vitrorobot` CLI — wraps `robot` with vitro configuration flags.
-- `robotframework_vitro.variables` — surfaces `VITRO_*` environment variables
-  as Robot variables.
 - Package exports: `VitroListener`, `VitroLibrary`, `VitroRobotError`,
   `get_listener`.
