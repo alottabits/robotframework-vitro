@@ -74,13 +74,42 @@ offers name-based access.
 | `legacy` | `VITRO_LEGACY` | Expose `devices.<device>` legacy namespace |
 | `ignore_devices` | `VITRO_IGNORE_DEVICES` | Comma-separated list of device names to skip |
 
+> **Caveat on `skip_boot`.** This option skips `vitro_device_boot` entirely.
+> Any state a driver caches *during* that hook (ACS references for reboot
+> verification, post-boot console activation, capability-prep that happens
+> on first boot, etc.) will not be present. Tests that exercise such state
+> must run without `--skip-boot`.
+
+## Reaching the bridge from Python
+
+The infrastructure keywords in `VitroLibrary` are also exposed as
+module-level functions, so Python-implemented keyword libraries can reach
+the bridge without instantiating the Robot library class:
+
+~~~python
+from robotframework_vitro import (
+    get_all_devices,
+    get_device,
+    get_device_manager,
+    get_vitro_config,
+)
+~~~
+
+Each raises `VitroLibraryError` with the same friendly message as the
+corresponding Robot keyword if it is called before devices are deployed,
+or (for `get_device`) the name isn't in the inventory.
+
 ## Writing a test-project keyword library
 
 ~~~python
+# File: RouterKeywords.py  ← filename must match the class name (see note below)
 from robot.api.deco import keyword
 
 
 def _get_listener():
+    # Lazy import: Robot's library loader can pull this module before the
+    # listener's own module is fully initialised, so resolve get_listener at
+    # call time instead of import time.
     from robotframework_vitro.listener import get_listener
     return get_listener()
 
@@ -102,6 +131,21 @@ class RouterKeywords:
 Robot tests obtain `${router}` via `${router}=    Get Device    edge_router`
 and pass it into the keyword. The teardown registered here runs automatically
 when the test ends; the test itself does not need a `[Teardown]` block.
+
+> **Robot library-name convention.** When a Python library file contains a
+> single class, Robot Framework expects the filename to match the class name
+> (case-insensitive) — `RouterKeywords` in a `RouterKeywords.py` file. If the
+> names disagree (for example `router_keywords.py` + class `RouterKeywords`),
+> Robot's library loader silently falls back to module-level functions, finds
+> none, and reports every keyword as "No keyword with name '...' found". Use
+> the class-matching filename, or import with qualified notation
+> (`Library    router_keywords.RouterKeywords`).
+
+> **Python typing.** Robot Framework 3.1+ auto-converts keyword arguments to
+> their Python type hints before the keyword body runs. Annotating
+> `port: int` / `timeout: int` etc. is sufficient — no `int(...)` casts in
+> the body are needed. If the cast fails, Robot raises a clear conversion
+> error before the keyword is called.
 
 ## License
 

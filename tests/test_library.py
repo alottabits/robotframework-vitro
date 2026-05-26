@@ -1,11 +1,17 @@
-"""Tests for VitroLibrary."""
+"""Tests for VitroLibrary and the module-level accessor functions."""
 
 from unittest.mock import MagicMock
 
 import pytest
 
 from robotframework_vitro.exceptions import VitroLibraryError
-from robotframework_vitro.library import VitroLibrary
+from robotframework_vitro.library import (
+    VitroLibrary,
+    get_all_devices,
+    get_device,
+    get_device_manager,
+    get_vitro_config,
+)
 from vitro.devices.base_devices.vitro_device import VitroDevice
 
 
@@ -157,3 +163,99 @@ def test_get_all_devices_filters_via_vitro_device_base(listener):
     lib.get_all_devices()
 
     listener.device_manager.get_devices_by_type.assert_called_once_with(VitroDevice)
+
+
+# ---------------------------------------------------------------------------
+# Module-level accessor functions
+#
+# The Robot keywords above are one-line forwarders to these. The tests here
+# cover the same behaviour from the function entry-point so downstream Python
+# keyword libraries can rely on the contract without going through Robot.
+# ---------------------------------------------------------------------------
+
+
+def test_module_get_device_manager_returns_listener_value(listener):
+    assert get_device_manager() is listener.device_manager
+
+
+def test_module_get_device_manager_raises_before_deploy(mocker):
+    fake = MagicMock(name="listener")
+    fake.device_manager = None
+    mocker.patch("robotframework_vitro.library.get_listener", return_value=fake)
+
+    with pytest.raises(VitroLibraryError, match="not deployed"):
+        get_device_manager()
+
+
+def test_module_get_vitro_config_returns_listener_value(listener):
+    assert get_vitro_config() is listener.vitro_config
+
+
+def test_module_get_vitro_config_raises_before_deploy(mocker):
+    fake = MagicMock(name="listener")
+    fake.vitro_config = None
+    mocker.patch("robotframework_vitro.library.get_listener", return_value=fake)
+
+    with pytest.raises(VitroLibraryError, match="not deployed"):
+        get_vitro_config()
+
+
+def test_module_get_device_returns_named_instance(listener):
+    phone1 = FakeDevice("phone1")
+    listener.device_manager.get_devices_by_type.return_value = {"phone1": phone1}
+
+    assert get_device("phone1") is phone1
+
+
+def test_module_get_device_unknown_name_lists_available(listener):
+    listener.device_manager.get_devices_by_type.return_value = {
+        "phone1": FakeDevice("phone1"),
+    }
+
+    with pytest.raises(VitroLibraryError, match="phone2") as excinfo:
+        get_device("phone2")
+    assert "phone1" in str(excinfo.value)
+
+
+def test_module_get_device_raises_before_deploy(mocker):
+    fake = MagicMock(name="listener")
+    fake.device_manager = None
+    mocker.patch("robotframework_vitro.library.get_listener", return_value=fake)
+
+    with pytest.raises(VitroLibraryError, match="not deployed"):
+        get_device("phone1")
+
+
+def test_module_get_all_devices_returns_full_dict(listener):
+    devices = {
+        "phone1": FakeDevice("phone1"),
+        "phone2": FakeDevice("phone2"),
+    }
+    listener.device_manager.get_devices_by_type.return_value = devices
+
+    assert get_all_devices() == devices
+
+
+def test_module_get_all_devices_raises_before_deploy(mocker):
+    fake = MagicMock(name="listener")
+    fake.device_manager = None
+    mocker.patch("robotframework_vitro.library.get_listener", return_value=fake)
+
+    with pytest.raises(VitroLibraryError, match="not deployed"):
+        get_all_devices()
+
+
+def test_module_get_all_devices_filters_via_vitro_device_base(listener):
+    get_all_devices()
+
+    listener.device_manager.get_devices_by_type.assert_called_once_with(VitroDevice)
+
+
+def test_module_accessors_reachable_from_package_namespace():
+    """The accessors are re-exported from ``robotframework_vitro``."""
+    import robotframework_vitro as rfv
+
+    assert rfv.get_device_manager is get_device_manager
+    assert rfv.get_vitro_config is get_vitro_config
+    assert rfv.get_device is get_device
+    assert rfv.get_all_devices is get_all_devices
