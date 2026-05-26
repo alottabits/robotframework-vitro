@@ -14,6 +14,26 @@
   raising `VitroLibraryError` with the available names on miss.
 - `Get All Devices` keyword — returns `dict[name, device]` for every registered
   device.
+- Module-level accessor functions `get_device_manager`, `get_vitro_config`,
+  `get_device`, and `get_all_devices`. Each raises `VitroLibraryError` with
+  the same friendly messages as the matching Robot keyword. Re-exported from
+  the package root so Python-implemented keyword libraries can reach the
+  bridge without instantiating `VitroLibrary`. The Robot keywords are now
+  one-line forwarders to these functions; surface and error semantics are
+  unchanged.
+- `py.typed` marker (PEP 561). Downstream type-checkers now honour the
+  package's annotations instead of falling back to "missing stubs".
+
+### Docs
+- README: new "Reaching the bridge from Python" section covering the
+  module-level accessors, a "Caveat on `skip_boot`" callout, a Robot
+  library-name convention warning (filename must match the class name
+  case-insensitively), a Python typing note for Robot's auto-conversion
+  of annotated keyword arguments, and an explanation of the
+  `_get_listener` lazy-import pattern.
+- `vitrorobot --help`: argparse description + epilog now document that
+  arguments not consumed by the wrapper are forwarded to `robot` unchanged
+  (e.g. `--outputdir`, `--include`, test paths), with a worked example.
 
 ### Removed
 - `Get Device By Type` and `Get Devices By Type` keywords.
