@@ -28,12 +28,12 @@ jobs:
       # `uv publish` falls back to looking for a token and fails.
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install uv
         # Pin to a released version; check for newer at
         # https://github.com/astral-sh/setup-uv/releases
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8
 
       - name: Build
         run: uv build --out-dir dist
