@@ -3,7 +3,8 @@
 Robot Framework bridge for the [vitro](https://pypi.org/project/vitro/) test framework.
 A thin adapter: a listener that owns vitro lifecycle, a library of infrastructure
 keywords, and a CLI wrapper. Test projects supply their own scenario-aligned
-keyword libraries that delegate to `vitro-templates` and `vitro-operations`.
+keyword libraries that delegate to `testoperations` composition functions over
+`testprotocols`-typed devices.
 
 ## Install
 
@@ -50,7 +51,7 @@ offers name-based access.
 ## Key design principles
 
 1. **Libraries are thin wrappers.** Test projects create `robot/libraries/*.py`
-   keyword files that call into `vitro-templates` / `vitro-operations`. The
+   keyword files that call into `testoperations` / `testprotocols`. The
    bridge does not ship scenario-specific keywords.
 
 2. **Cleanup is implicit.** Keyword implementations call
