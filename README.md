@@ -1,6 +1,6 @@
 # robotframework-vitro
 
-Robot Framework bridge for the [vitro](https://github.com/…/vitro) test framework.
+Robot Framework bridge for the [vitro](https://pypi.org/project/vitro/) test framework.
 A thin adapter: a listener that owns vitro lifecycle, a library of infrastructure
 keywords, and a CLI wrapper. Test projects supply their own scenario-aligned
 keyword libraries that delegate to `vitro-templates` and `vitro-operations`.
@@ -166,6 +166,12 @@ automatically when the test ends; the test itself does not need a
 > the body are needed. If the cast fails, Robot raises a clear conversion
 > error before the keyword is called.
 
+## Contributing
+
+Contributions are welcome. All commits must carry a Developer Certificate of
+Origin sign-off (`git commit -s`); a DCO check runs on every pull request. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+
 ## License
 
-BSD-3-Clause. See `LICENSE`.
+Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

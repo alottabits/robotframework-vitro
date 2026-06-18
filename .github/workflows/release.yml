@@ -1,0 +1,44 @@
+name: Release
+
+# Publishes the package to PyPI when a version tag (vX.Y.Z) is pushed.
+#
+# Auth is PyPI **trusted publishing** (OIDC) — no API tokens stored as secrets.
+# This requires, on PyPI, a registered (or pending) publisher for the package
+# pointing at: owner `alottabits`, repo `robotframework-vitro`, workflow
+# `release.yml`, environment `pypi`. `uv publish` mints a short-lived OIDC token
+# automatically when it detects it is running in GitHub Actions with
+# `id-token: write`.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # `environment: pypi` matches the trusted-publisher config on PyPI and lets
+    # you require a manual approval gate (Settings → Environments → pypi).
+    environment: pypi
+    permissions:
+      # Required for OIDC trusted publishing — easy to forget; without it
+      # `uv publish` falls back to looking for a token and fails.
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        # Pin to a released version; check for newer at
+        # https://github.com/astral-sh/setup-uv/releases
+        uses: astral-sh/setup-uv@v6
+
+      - name: Build
+        run: uv build --out-dir dist
+
+      # Trusted publishing is automatic in CI; no token is passed. A published
+      # version is immutable — rehearse on TestPyPI before tagging.
+      - name: Publish
+        run: uv publish dist/*
