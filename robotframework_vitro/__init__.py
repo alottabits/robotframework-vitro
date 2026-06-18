@@ -19,7 +19,7 @@ from robotframework_vitro.library import (
 )
 from robotframework_vitro.listener import VitroListener, get_listener
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "VitroLibrary",

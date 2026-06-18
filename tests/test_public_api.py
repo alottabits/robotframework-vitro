@@ -1,10 +1,12 @@
 """Top-level import surface stays stable."""
 
+from importlib.metadata import version
+
 import robotframework_vitro
 
 
 def test_version_is_exposed():
-    assert robotframework_vitro.__version__ == "0.1.0"
+    assert robotframework_vitro.__version__ == version("robotframework-vitro")
 
 
 def test_listener_is_exported():

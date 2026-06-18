@@ -1,63 +1,39 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
 
-### Changed (BREAKING)
-- Device lookup is now name-based, mirroring pytest-palco. The previous
-  `Get Device By Type` / `Get Devices By Type` keywords (which used a hardcoded
-  `_TYPE_MAP` of nine testprotocols aliases) are removed. Suites that referenced
-  them must switch to `Get Device <inventory_name>` or call the DeviceManager
-  directly via `Get Device Manager` + `Call Method ... get_devices_by_type`.
+### Fixed
+- README: corrected the delegation targets from the non-existent
+  `vitro-templates` / `vitro-operations` to `testoperations` composition
+  functions over `testprotocols`-typed devices.
 
-### Added
-- `Get Device <name>` keyword — returns the device registered under `<name>`,
-  raising `VitroLibraryError` with the available names on miss.
-- `Get All Devices` keyword — returns `dict[name, device]` for every registered
-  device.
-- Module-level functions covering every `VitroLibrary` infrastructure
-  keyword: `get_device_manager`, `get_vitro_config`, `get_device`,
-  `get_all_devices`, `register_teardown`, `set_test_context`,
-  `get_test_context`, `clear_test_context`, and `log_step`. Each
-  matches the surface and error semantics of the corresponding
-  keyword. Re-exported from the package root so Python-implemented
-  keyword libraries can reach the bridge without instantiating
-  `VitroLibrary` and without the `_get_listener` lazy-import helper.
-  The Robot keywords are one-line forwarders to these functions.
-- `py.typed` marker (PEP 561). Downstream type-checkers now honour the
-  package's annotations instead of falling back to "missing stubs".
+## 0.1.0
 
-### Docs
-- README: new "Reaching the bridge from Python" section covering the
-  full module-level surface, an updated keyword-library snippet that
-  uses `register_teardown` and `get_device` directly (no
-  `_get_listener` helper), a "Caveat on `skip_boot`" callout, a Robot
-  library-name convention warning (filename must match the class name
-  case-insensitively), and a Python typing note for Robot's
-  auto-conversion of annotated keyword arguments.
-- `vitrorobot --help`: argparse description + epilog now document that
-  arguments not consumed by the wrapper are forwarded to `robot` unchanged
-  (e.g. `--outputdir`, `--include`, test paths), with a worked example.
-
-### Removed
-- `Get Device By Type` and `Get Devices By Type` keywords.
-- `VitroLibrary._TYPE_MAP`, `_static_type_map`, `_resolve_device_type`, and
-  `_type_cache`.
-- `testprotocols` runtime dependency.
-- `robotframework_vitro.variables` module. The Robot variable-file pattern
-  it implemented (surfacing `VITRO_*` env vars as `${VITRO_*}` variables)
-  predated the listener's own env-var ingestion and `Get Vitro Config`;
-  it had no internal consumers and was not re-exported from the package
-  root.
-
-## 0.1.0 (unreleased)
+First public release.
 
 ### Added
 - `VitroListener` — Robot Framework listener (v3) that runs vitro's pluggy hooks
   on suite start/end, wraps `vitro_setup_env` in `asyncio.run`, and maintains a
   LIFO per-test teardown stack.
-- `VitroLibrary` — GLOBAL-scope Robot library with `Get Device Manager`,
-  `Get Device By Type`, `Get Devices By Type`, `Get Vitro Config`, `Log Step`,
-  and context-dict keywords.
-- `vitrorobot` CLI — wraps `robot` with vitro configuration flags.
-- Package exports: `VitroListener`, `VitroLibrary`, `VitroRobotError`,
-  `get_listener`.
+- `VitroLibrary` — Robot library of infrastructure keywords: `Get Device Manager`,
+  `Get Vitro Config`, `Get Device <name>`, `Get All Devices`, `Log Step`, and the
+  `Set Test Context` / `Get Test Context` / `Clear Test Context` keywords. Device
+  lookup is name-based, keyed on the inventory name (`Get Device <inventory_name>`);
+  for type-filtered lookups, reach the DeviceManager via `Get Device Manager` +
+  `Call Method ... get_devices_by_type`. `Get Device <name>` raises
+  `VitroLibraryError` listing the available names on a miss.
+- Module-level functions covering every `VitroLibrary` infrastructure keyword:
+  `get_device_manager`, `get_vitro_config`, `get_device`, `get_all_devices`,
+  `register_teardown`, `set_test_context`, `get_test_context`,
+  `clear_test_context`, and `log_step`. Each matches the surface and error
+  semantics of the corresponding keyword and is re-exported from the package
+  root, so Python keyword libraries can reach the bridge without instantiating
+  `VitroLibrary`. The Robot keywords are one-line forwarders to these functions.
+- `vitrorobot` CLI — wraps `robot` with vitro configuration flags; arguments not
+  consumed by the wrapper are forwarded to `robot` unchanged (e.g. `--outputdir`,
+  `--include`, test paths).
+- `py.typed` marker (PEP 561), so downstream type-checkers honour the package's
+  annotations.
+- Package exports: `VitroListener`, `VitroLibrary`, `VitroListenerError`,
+  `VitroLibraryError`, `VitroRobotError`, `get_listener`, `__version__`, and the
+  module-level functions above.
