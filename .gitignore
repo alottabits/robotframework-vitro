@@ -3,6 +3,8 @@ __pycache__/
 *$py.class
 *.egg-info/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .coverage
 htmlcov/
 dist/
@@ -12,3 +14,7 @@ venv/
 .env
 .vscode/
 .idea/
+
+# local working documents — not shipped
+docs/superpowers/plans/
+action-document.md
